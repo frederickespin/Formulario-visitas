@@ -8,6 +8,7 @@
   :root{
     --azul:#1f2a5c;
     --rojo:#c0392b;
+    --verde:#1e7d32;
     --azul-claro:#dbe3f5;
     --borde:#9aa7c4;
     --texto:#1a1a1a;
@@ -138,7 +139,21 @@
   .modal .btn{ width:100%; background:var(--azul); color:#fff; }
   .ejemplo{ font-size:11.5px; color:#888; margin-top:8px; text-align:center; }
 
-  /* ============ BARRA INFERIOR DE LA APP (solo móvil) ============ */
+  /* Aviso flotante de confirmación (check + folio) */
+  .toast{
+    position:fixed; left:50%; bottom:88px;
+    transform:translateX(-50%) translateY(16px);
+    background:#fff; color:var(--verde);
+    font-weight:bold; font-size:17px; letter-spacing:1px;
+    padding:9px 24px; border-radius:30px;
+    border:1.5px solid var(--verde);
+    box-shadow:0 4px 16px rgba(0,0,0,.25);
+    opacity:0; pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+    z-index:60;
+  }
+  .toast.visible{ opacity:1; transform:translateX(-50%) translateY(0); }
+
   .barra-movil{ display:none; }
 
   /* ============ MODO MÓVIL: 3 pantallas con 2 bloques cada una ============ */
@@ -161,7 +176,6 @@
     .campo{ min-width:140px; }
     label{ font-size:10.5px; margin-bottom:2px; }
     label small.ayuda{ font-size:8.5px; }
-    /* 16px en TODOS los controles: evita el zoom automático al escribir */
     input[type=text], input[type=date], input[type=number], input[type=tel], textarea, select,
     .modal input{ font-size:16px; }
     .modal input{ padding:12px; }
@@ -178,6 +192,7 @@
     table.gastos td input{ font-size:16px; text-align:right; }
     #otrosDesc{ width:100% !important; margin-top:3px; }
     .firma .linea{ margin-top:26px; font-size:10px; }
+    .toast{ bottom:84px; }
     .barra-movil{
       display:flex; position:fixed; bottom:0; left:0; right:0;
       background:var(--azul);
@@ -187,11 +202,15 @@
     }
     .barra-movil button{
       background:transparent; border:none; color:#fff;
-      font-size:21px; padding:9px 12px; cursor:pointer; border-radius:8px; line-height:1;
+      font-size:21px; padding:9px 14px; cursor:pointer; border-radius:8px; line-height:1;
     }
     .barra-movil button:active{ background:rgba(255,255,255,.22); }
     .barra-movil button:disabled{ opacity:.3; }
-    .bm-paso{ color:#fff; font-weight:bold; font-size:13px; min-width:48px; text-align:center; }
+    .bm-paso{ color:#fff; text-align:center; }
+    .bm-num{ font-weight:bold; font-size:13px; }
+    .bm-puntos{ display:flex; gap:5px; justify-content:center; margin-top:3px; }
+    .punto{ width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.35); }
+    .punto.activo{ background:#fff; }
   }
 
   /* ============ Impresión: UNA SOLA HOJA (carta o A4) ============ */
@@ -207,7 +226,6 @@
     .folio-box .num{ font-size:14px; padding:2px 10px; min-width:85px; border-width:1.5px; }
     .folio-box .usuario{ font-size:8.5px; margin-top:2px; }
     h1.titulo{ font-size:11px; margin:0 0 5px; }
-    /* Al imprimir desde el móvil se muestran TODAS las secciones, incluida la 6 */
     fieldset{ display:block !important; margin:0 0 4px; padding:4px 8px 5px; break-inside:avoid; page-break-inside:avoid; border:1px solid var(--borde); }
     legend{ font-size:9px; padding:1px 8px; }
     .fila{ gap:10px; margin-bottom:4px; }
@@ -251,19 +269,25 @@
 
 <div class="barra-acciones no-print">
   <button type="button" class="btn btn-secundario" onclick="cambiarUsuario()">👤 Cambiar usuario</button>
-  <button type="button" class="btn btn-secundario" onclick="limpiarFormulario()">🧹 Limpiar formulario</button>
   <button type="button" class="btn btn-primario" onclick="imprimirPDF()">🖨️ Imprimir / Guardar PDF</button>
 </div>
 
 <!-- Barra inferior estilo app (solo visible en móvil) -->
 <div class="barra-movil no-print">
   <button type="button" onclick="cambiarUsuario()" title="Cambiar usuario">👤</button>
-  <button type="button" onclick="limpiarFormulario()" title="Limpiar formulario">🧹</button>
   <button type="button" id="btnPrev" onclick="pasoAnterior()" title="Pantalla anterior">◀</button>
-  <span class="bm-paso" id="indicadorPaso">1/3</span>
+  <span class="bm-paso">
+    <span class="bm-num" id="indicadorPaso">1/3</span>
+    <span class="bm-puntos" id="puntosPaso">
+      <span class="punto activo"></span><span class="punto"></span><span class="punto"></span>
+    </span>
+  </span>
   <button type="button" id="btnNext" onclick="pasoSiguiente()" title="Siguiente pantalla">▶</button>
   <button type="button" onclick="imprimirPDF()" title="Imprimir / Guardar PDF">🖨️</button>
 </div>
+
+<!-- Aviso flotante: solo check + número de folio -->
+<div class="toast no-print" id="toastOK"></div>
 
 <div class="hoja">
 <form id="formVisita" novalidate>
@@ -287,7 +311,6 @@
 
   <input type="hidden" id="numVisita" name="numVisita">
 
-  <!-- PANTALLA 1 (móvil): Información general + Cliente y trayecto -->
   <fieldset data-paso="1">
     <legend>1. INFORMACIÓN GENERAL</legend>
     <div class="fila">
@@ -345,7 +368,6 @@
     </div>
   </fieldset>
 
-  <!-- PANTALLA 2 (móvil): Trabajo realizado + Facturación -->
   <fieldset data-paso="2">
     <legend>3. TRABAJO REALIZADO</legend>
     <div class="fila">
@@ -412,7 +434,6 @@
     </div>
   </fieldset>
 
-  <!-- PANTALLA 3 (móvil): Gastos -->
   <fieldset data-paso="3">
     <legend>5. GASTOS (CON COMPROBANTE)</legend>
     <table class="gastos">
@@ -452,7 +473,6 @@
     </table>
   </fieldset>
 
-  <!-- SOLO IMPRESIÓN: no aparece en las pantallas del móvil -->
   <fieldset data-paso="impresion">
     <legend>6. APROBACIÓN</legend>
     <div class="fila">
@@ -514,7 +534,6 @@
     if (e.key === 'Enter') confirmarUsuario();
   });
 
-  // ---------- Folio consecutivo general ----------
   function cargarFolio(){
     var n = parseInt(localStorage.getItem('contador_visitas'));
     if (isNaN(n) || n < 1) n = 1;
@@ -531,7 +550,7 @@
   }
   inicializarUsuario();
 
-  // ---------- Navegación: 3 pantallas (móvil) ----------
+  // ---------- Navegación: 3 pantallas (móvil) con puntos de progreso ----------
   var pasoActual = 1;
   var TOTAL_PASOS = 3;
   function irAlPaso(n){
@@ -541,6 +560,9 @@
     });
     var ind = document.getElementById('indicadorPaso');
     if (ind) ind.textContent = pasoActual + '/' + TOTAL_PASOS;
+    document.querySelectorAll('#puntosPaso .punto').forEach(function(p, i){
+      p.classList.toggle('activo', (i + 1) === pasoActual);
+    });
     var bp = document.getElementById('btnPrev'); if (bp) bp.disabled = (pasoActual === 1);
     var bn = document.getElementById('btnNext'); if (bn) bn.disabled = (pasoActual === TOTAL_PASOS);
     window.scrollTo(0, 0);
@@ -576,6 +598,45 @@
     document.getElementById('boxNo').classList.toggle('activo', !!no);
   }
 
+  // ---------- Aviso flotante: solo check + folio ----------
+  var toastTimer = null;
+  function mostrarToast(mensaje){
+    var t = document.getElementById('toastOK');
+    t.textContent = mensaje;
+    t.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('visible'); }, 2500);
+  }
+
+  // ---------- Limpieza automática después de imprimir ----------
+  var limpiezaPendiente = false;
+  var folioImpreso = '';
+  function alTerminarImpresion(){
+    if (!limpiezaPendiente) return;
+    limpiezaPendiente = false;
+    window.removeEventListener('afterprint', alTerminarImpresion);
+    cargarFolio();
+    limpiarSilencioso();
+    mostrarToast('✅ ' + folioImpreso);
+  }
+  function programarLimpieza(){
+    limpiezaPendiente = true;
+    window.addEventListener('afterprint', alTerminarImpresion);
+    setTimeout(alTerminarImpresion, 3000);
+  }
+
+  function limpiarSilencioso(){
+    document.getElementById('formVisita').reset();
+    document.getElementById('totalGastos').textContent = '0.00';
+    document.getElementById('boxSi').classList.remove('activo');
+    document.getElementById('boxNo').classList.remove('activo');
+    if (USUARIO.nombre){
+      document.getElementById('manejadoPor').value = USUARIO.nombre.toUpperCase();
+      document.getElementById('firmaSolicitante').textContent = USUARIO.nombre.toUpperCase();
+    }
+    irAlPaso(1);
+  }
+
   function imprimirPDF(){
     var form = document.getElementById('formVisita');
     if (!USUARIO.nombre){
@@ -589,23 +650,11 @@
       form.reportValidity();
       return;
     }
+    folioImpreso = document.getElementById('numVisita').value;
     avanzarFolio();
     window.print();
     setTimeout(cargarFolio, 500);
-  }
-
-  function limpiarFormulario(){
-    if (!confirm('¿Desea limpiar todos los campos del formulario?')) return;
-    document.getElementById('formVisita').reset();
-    document.getElementById('totalGastos').textContent = '0.00';
-    document.getElementById('boxSi').classList.remove('activo');
-    document.getElementById('boxNo').classList.remove('activo');
-    if (USUARIO.nombre){
-      document.getElementById('manejadoPor').value = USUARIO.nombre.toUpperCase();
-      document.getElementById('firmaSolicitante').textContent = USUARIO.nombre.toUpperCase();
-    }
-    cargarFolio();
-    irAlPaso(1);
+    programarLimpieza();
   }
 </script>
 </body>
