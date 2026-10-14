@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Solicitud de Recursos - Visita Técnica | International Packers S.R.L.</title>
 <style>
   :root{
@@ -133,6 +133,64 @@
   .modal input:focus{ border-color:var(--azul); outline:none; }
   .modal .btn{ width:100%; background:var(--azul); color:#fff; }
   .ejemplo{ font-size:11.5px; color:#888; margin-top:8px; text-align:center; }
+
+  /* ============ BARRA INFERIOR DE LA APP (solo móvil) ============ */
+  .barra-movil{ display:none; }
+
+  /* ============ MODO MÓVIL: pasos sin scroll ============ */
+  @media (max-width:768px){
+    body{ padding:8px 8px 92px; }
+    .nota-pantalla{ display:none; }
+    .barra-acciones{ display:none; }
+    .hoja{ padding:12px; max-width:100%; box-shadow:none; }
+    .doc-header{ padding-bottom:6px; margin-bottom:8px; gap:10px; }
+    .doc-header img.logo{ width:132px; }
+    .doc-header .datos-empresa{ font-size:8.5px; margin-top:2px; line-height:1.3; }
+    .folio-box .etiqueta{ font-size:9px; }
+    .folio-box .num{ font-size:15px; padding:2px 8px; min-width:70px; border-width:1.5px; }
+    .folio-box .usuario{ font-size:9px; }
+    h1.titulo{ font-size:11px; margin:0 0 8px; }
+    fieldset{ display:none; margin:0; padding:10px 2px 4px; border:none; }
+    fieldset.activa{ display:block; }
+    legend{ font-size:11px; }
+    .fila{ gap:8px; margin-bottom:10px; }
+    .campo{ min-width:140px; }
+    label{ font-size:11px; margin-bottom:2px; }
+    label small.ayuda{ font-size:9px; }
+    input[type=text], input[type=date], input[type=number], input[type=tel], textarea, select{ font-size:16px; }
+    .grupo-check{ gap:14px; padding-top:2px; }
+    .grupo-check label.chk{ font-size:15px; }
+    input[type=checkbox], input[type=radio]{ width:18px; height:18px; }
+    textarea{ min-height:64px; }
+    .sub-cond{ margin-top:6px; padding:6px 8px; }
+    /* Tabla de gastos compacta y dentro de la pantalla */
+    table.gastos{ table-layout:fixed; }
+    table.gastos th, table.gastos td{ font-size:10.5px; padding:4px 3px; overflow-wrap:break-word; }
+    table.gastos th:nth-child(1){ width:24px !important; }
+    table.gastos th:nth-child(3){ width:66px !important; }
+    table.gastos th:nth-child(4){ width:46px !important; }
+    table.gastos td input{ font-size:15px; text-align:right; }
+    #otrosDesc{ width:100% !important; margin-top:3px; }
+    .firma .linea{ margin-top:28px; font-size:10px; }
+    .firmas{ gap:20px; }
+    /* Barra inferior fija con iconos */
+    .barra-movil{
+      display:flex; position:fixed; bottom:0; left:0; right:0;
+      background:var(--azul);
+      padding:4px 2px calc(4px + env(safe-area-inset-bottom, 0px));
+      justify-content:space-around; align-items:center; z-index:50;
+      box-shadow:0 -2px 10px rgba(0,0,0,.25);
+    }
+    .barra-movil button{
+      background:transparent; border:none; color:#fff;
+      font-size:21px; padding:9px 12px; cursor:pointer; border-radius:8px; line-height:1;
+    }
+    .barra-movil button:active{ background:rgba(255,255,255,.22); }
+    .barra-movil button:disabled{ opacity:.3; }
+    .bm-paso{ color:#fff; font-weight:bold; font-size:13px; min-width:48px; text-align:center; }
+  }
+
+  /* ============ Impresión: UNA SOLA HOJA (carta o A4) ============ */
   @page{ size:auto; margin:9mm; }
   @media print{
     html, body{ background:#fff; padding:0; margin:0; font-size:10px; }
@@ -145,7 +203,8 @@
     .folio-box .num{ font-size:14px; padding:2px 10px; min-width:85px; border-width:1.5px; }
     .folio-box .usuario{ font-size:8.5px; margin-top:2px; }
     h1.titulo{ font-size:11px; margin:0 0 5px; }
-    fieldset{ margin:0 0 4px; padding:4px 8px 5px; break-inside:avoid; page-break-inside:avoid; }
+    /* Al imprimir desde el móvil se muestran TODAS las secciones */
+    fieldset{ display:block !important; margin:0 0 4px; padding:4px 8px 5px; break-inside:avoid; page-break-inside:avoid; border:1px solid var(--borde); }
     legend{ font-size:9px; padding:1px 8px; }
     .fila{ gap:10px; margin-bottom:4px; }
     label{ font-size:8.5px; margin-bottom:1px; }
@@ -158,6 +217,7 @@
     textarea{ min-height:30px; font-size:10px; }
     .sub-cond{ margin-top:3px; padding:2px 8px; background:transparent; }
     .sub-cond.activo{ background:transparent; }
+    table.gastos{ table-layout:auto; }
     table.gastos th, table.gastos td{ padding:2px 5px; font-size:9.5px; }
     table.gastos th{ font-size:8.5px; }
     table.gastos td input{ font-size:10px; }
@@ -190,6 +250,16 @@
   <button type="button" class="btn btn-primario" onclick="imprimirPDF()">🖨️ Imprimir / Guardar PDF</button>
 </div>
 
+<!-- Barra inferior estilo app (solo visible en móvil) -->
+<div class="barra-movil no-print">
+  <button type="button" onclick="cambiarUsuario()" title="Cambiar usuario">👤</button>
+  <button type="button" onclick="limpiarFormulario()" title="Limpiar formulario">🧹</button>
+  <button type="button" id="btnPrev" onclick="pasoAnterior()" title="Sección anterior">◀</button>
+  <span class="bm-paso" id="indicadorPaso">1/6</span>
+  <button type="button" id="btnNext" onclick="pasoSiguiente()" title="Siguiente sección">▶</button>
+  <button type="button" onclick="imprimirPDF()" title="Imprimir / Guardar PDF">🖨️</button>
+</div>
+
 <div class="hoja">
 <form id="formVisita" novalidate>
 
@@ -210,6 +280,9 @@
 
   <h1 class="titulo">SOLICITUD DE RECURSOS — VISITA TÉCNICA FUERA DE LA CIUDAD</h1>
 
+  <!-- Folio real (oculto, se muestra grande en el encabezado) -->
+  <input type="hidden" id="numVisita" name="numVisita">
+
   <fieldset>
     <legend>1. INFORMACIÓN GENERAL</legend>
     <div class="fila">
@@ -222,10 +295,6 @@
       </div>
     </div>
     <div class="fila">
-      <div class="campo fijo" style="min-width:140px;">
-        <label>N° de solicitud <span class="req">*</span></label>
-        <input type="text" id="numVisita" name="numVisita" required style="font-weight:bold;color:var(--rojo);">
-      </div>
       <div class="campo fijo" style="min-width:170px;">
         <label>Fecha de la visita <span class="req">*</span></label>
         <input type="date" id="fecha" name="fecha" required>
@@ -433,7 +502,7 @@
     if (e.key === 'Enter') confirmarUsuario();
   });
 
-  // ---------- Folio consecutivo general (sin iniciales) ----------
+  // ---------- Folio consecutivo general ----------
   function cargarFolio(){
     var n = parseInt(localStorage.getItem('contador_visitas'));
     if (isNaN(n) || n < 1) n = 1;
@@ -449,6 +518,25 @@
     }
   }
   inicializarUsuario();
+
+  // ---------- Navegación por pasos (modo móvil) ----------
+  var pasoActual = 1;
+  var TOTAL_PASOS = 6;
+  function irAlPaso(n){
+    pasoActual = Math.min(Math.max(n, 1), TOTAL_PASOS);
+    var secciones = document.querySelectorAll('#formVisita fieldset');
+    secciones.forEach(function(fs, i){
+      fs.classList.toggle('activa', (i + 1) === pasoActual);
+    });
+    var ind = document.getElementById('indicadorPaso');
+    if (ind) ind.textContent = pasoActual + '/' + TOTAL_PASOS;
+    var bp = document.getElementById('btnPrev'); if (bp) bp.disabled = (pasoActual === 1);
+    var bn = document.getElementById('btnNext'); if (bn) bn.disabled = (pasoActual === TOTAL_PASOS);
+    window.scrollTo(0, 0);
+  }
+  function pasoSiguiente(){ irAlPaso(pasoActual + 1); }
+  function pasoAnterior(){ irAlPaso(pasoActual - 1); }
+  irAlPaso(1);
 
   function calcularTotal(){
     var total = 0;
@@ -502,6 +590,7 @@
     document.getElementById('boxNo').classList.remove('activo');
     if (USUARIO.nombre) document.getElementById('manejadoPor').value = USUARIO.nombre.toUpperCase();
     cargarFolio();
+    irAlPaso(1);
   }
 </script>
 </body>
